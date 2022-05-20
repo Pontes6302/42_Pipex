@@ -6,7 +6,7 @@
 /*   By: sifreita <sifreita@42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/05/04 17:25:55 by sifreita          #+#    #+#             */
-/*   Updated: 2022/05/19 07:19:40 by sifreita         ###   ########.fr       */
+/*   Updated: 2022/05/19 23:51:11 by sifreita         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,51 +15,23 @@
 int	ft_error_checking(int n)
 {
 	if (n == 0)
-		ft_printf("pipex: Invalid number of arguments.\n");
+		write(3, "pipex: Invalid number of arguments.\n", 37);
 	if (n == 1)
-		ft_printf("pipex: Error in fork.\n");
+		write(3, "pipex: Error in fork.\n", 23);
 	if (n == 2)
-		ft_printf("pipex: Error in pipe.\n");
+		write(3, "pipex: Error in pipe.\n", 23);
 	if (n == 3)
-		ft_printf("pipex: No such file or directory.\n");
+		write(3, "pipex: No such file or directory.\n", 35);
 	if (n == 4)
-		ft_printf("pipex: Permission denied.\n");
+		write(3, "pipex: Permission denied.\n", 27);
 	if (n == 5)
-		ft_printf("Error in\n");
-	exit(0);
-}
-
-char	filedir(char *fname, char **envp)
-{
-	char *dir;
-	int i;
-	char *temp;
-
-	i = 0;
-	while (envp[i] && ft_strncmp(envp[i], "PWD=", 4))
-		i++;
-	temp = envp[i] + 4;
-	dir = ft_strjoin(temp, "/", fname);
-	return (dir);
-}
-
-char	path(char **cmd, char **envp)
-{
-
-}
-
-int check_file(char dir)
-{
-	if (access(dir, F_OK) == -1)
-		ft_error_checking(3);
-	if (access(dir, R_OK) == -1 || access(dir, W_OK) == -1)
-		ft_error_checking(4);
-	return (1);
+		write (3, "pipex: Invalid argument.\n", 26);
+	exit(5);
 }
 
 void	child(int *pipe, char **argv, char **envp)
 {
-	int	f;
+	int		f;
 	char	**cmd;
 
 	close(pipe[0]);
@@ -68,56 +40,77 @@ void	child(int *pipe, char **argv, char **envp)
 	check_file(filedir(argv[1], envp));
 	f = open(filedir(argv[1], envp), O_RDONLY);
 	dup2(f, 0);
-	cmd = ft_strtrim(argv[2], " ");
+	cmd = ft_split(argv[2], ' ');
+	if (cmd[0] == NULL)
+		ft_error_checking(5);
 	if (execve(path(cmd, envp), cmd, envp) == -1)
 	{
-		ft_printf("pipex: Command not found: %s.\n", cmd[0]);
-		exit(0);
+		write(3, "pipexp: Command not found: ", 27);
+		write(3, cmd[0], ft_strlen(cmd[0]));
+		write(3, ".\n", 3);
+		exit(errno);
 	}
 }
 
 void	parent(int *pipe, char **argv, char **envp)
 {
-	int f;
+	int		f;
 	char	**cmd;
 
 	close(pipe[1]);
 	dup2(pipe[0], 0);
 	close(pipe[0]);
-	f = open(filedir(argv[4], envp), O_RDWR | O_CREAT | O_TRUNC);
+	f = open(filedir(argv[4], envp), O_RDWR | O_CREAT, 00770);
 	dup2(f, 1);
-	cmd = ft_strtrim(argv[3], " ");
+	cmd = ft_split(argv[3], ' ');
+	if (cmd[0] == NULL)
+		ft_error_checking(5);
 	if (execve(path(cmd, envp), cmd, envp) == -1)
 	{
-		ft_printf("pipex: Command not found: %s.\n", cmd[0]);
-		exit(0);
+		write(3, "pipexp: Command not found: ", 27);
+		write(3, cmd[0], ft_strlen(cmd[0]));
+		write(3, ".\n", 3);
+		exit(errno);
 	}
 }
 
-int	pipex(int arg, char **argv, char **envp)
+int	pipex(char **argv, char **envp)
 {
-	int	con[2];
+	int		con[2];
 	pid_t	p;
+	int		errcd;
 
+	errcd = 0;
 	if (pipe(con) == -1)
 		ft_error_checking (3);
 	p = fork();
 	if (p < 0)
 		ft_error_checking (1);
-	
 	if (p == 0)
 		child(con, argv, envp);
 	else
 	{
-		wait(NULL);
+		waitpid(p, &errcd, 0);
+		if (errcd / 256 == 5)
+			exit(0);
 		parent(con, argv, envp);
 	}
-	return 0;
+	return (0);
 }
 
 int	main(int argc, char **argv, char **envp)
 {
+	int	i;
+
+	i = 0;
+	dup(STDIN_FILENO);
+	while (argv[i])
+	{
+		if (!ft_strlen(argv[i]))
+			ft_error_checking(5);
+		i++;
+	}
 	if (argc != 5)
 		ft_error_checking(0);
-	pipex(argc, argv, envp);
+	pipex(argv, envp);
 }

@@ -1,35 +1,32 @@
 SRCS = ${wildcard *.c}
-TEXT = /text_art/${wildcard *.txt}
-OBJS = ${SRCS:.c=.o}
-FLAGS = 
+TEXT = /MakeArt/${wildcard *.txt}
+FLAGS = -Wall -Werror -Wextra
 INCS = pipex.h
 NAME = pipex
 
-${NAME}: ${OBJS}
-	@ar rcs ${NAME} ${OBJS}
-
-all:
+${NAME}: ${SRCS}
 	@clear
 	@cat MakeArt/compiling.txt
-	${NAME}
+	@sleep 1
+	@gcc ${SRCS} libftprintf.a $(FLAGS) -I ${INCS} -o ${NAME}
 	@clear
 	@cat MakeArt/compiled.txt
+	@sleep 0.5
+	@clear
 
-# bonus: ${NAME} ${OBJS_B}
-# 	ar rcs ${NAME} ${OBJS_B}
-
-.c.o:
-	@gcc $(FLAGS) -I ${INCS} -c $< -o ${<:c=o}
+all: ${NAME}
 
 clean:
 	@clear
 	@cat MakeArt/cleaning.txt
-	@rm -rf ${OBJS} ${OBJS_B}
+	@rm -rf ${NAME}
+	@sleep 1
 	@clear
 	@cat MakeArt/cleaned.txt
+	@sleep 0.5
+	@clear
 
 fclean: clean
-	@rm -rf ${NAME}
 
 re: fclean all
 
