@@ -6,6 +6,5 @@
 </br>
 
 </br>
-<p> This project will let you discover in detail a UNIX mechanism that you already know
-by using it in your program. </br>
+<p> This project aims to make you understand a bit deeper two concepts that you already know: the redirections and the pipes. It is an introduction project. </br>
 <p> Grade: 100% </p>
